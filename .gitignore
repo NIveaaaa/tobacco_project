@@ -1,0 +1,10 @@
+slides_for_education/
+train_book/
+*.mat
+*.xlsx
+*.xls
+*.doc
+*.docx
+*.pdf
+notes
+my_note
