@@ -8,3 +8,6 @@ train_book/
 *.pdf
 notes
 my_note
+.DS_Store
+.out
+*.m~
