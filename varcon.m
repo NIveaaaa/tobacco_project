@@ -11,4 +11,4 @@ L(lower_index) = rhokl;
 
 rho_mat = beta*beta'*omega2;
 c = [];
-ceq = 1-sum(rho_mat(d9))-rho;
+ceq = 1-sum(rho_mat(d9))-rho*rho;

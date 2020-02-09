@@ -11,3 +11,4 @@ my_note
 .DS_Store
 .out
 *.m~
+*.mlx

@@ -14,12 +14,13 @@
 %         emotionreshape: emation of DCE2
 %         rank1reshape: ranked choice of DCE1
 %         rank2reshape: ranked choice of DCE2
+%         M1 M2: transition matrix for ghk simulator
 
 
-function ll=loglik(param);
+function ll=loglik(param)
 
-global nresp nalt1 nset1 nalt2 nset2 d3 d4 d9 lower_index SEED NDRAW
-global X1reshape X2reshape emotionreshape rank1reshape rank2reshape
+global nresp nalt1 nset1 nalt2 nset2 d3 d4 lower_index SEED NDRAW
+global X1reshape X2reshape emotionreshape M1 M2
 
 %Arrange parameters
 % params[1:9] gamma1
@@ -45,35 +46,35 @@ p2 = zeros(nresp,nset2);
 for id = 1:nresp
     for s = 1:nset2
         
-        M2 = generateM(rank2reshape(:,s,id));
+        m2 = cell2mat(M2(s,id));
 
         % generate L for ghk simulator
         emotion_obs = emotionreshape(:,s,id);
         omega_obs = omega2(emotion_obs,emotion_obs);
-        omega_alt = M2*omega_obs*M2';
+        omega_alt = m2*omega_obs*m2';
         L2 = chol(omega_alt,'lower');
         
         % generate Vtilde for ghk simulator
         Xint2 = X2reshape(:,:,s,id)';
         Vint2 = Xint2*gamma2(:,emotion_obs);
         Vint2 = Vint2(d4); % final ultily 
-        V2tilde = M2*Vint2;
+        V2tilde = m2*Vint2;
         
         e = randn(nalt2-1,NDRAW);
         p2(id,s) = ghk(V2tilde,L2,e);
     end
     
     for s = 1:nset1
-        M1 = generateM(rank1reshape(:,s,id));
+        m1 = cell2mat(M1(s,id));
         Xint1 = X1reshape(:,:,s,id)';
-        V1tilde = M1 * (Xint1*gamma1 + sum(Xint1*beta,2));
+        V1tilde = m1 * (Xint1*gamma1 + sum(Xint1*beta,2));
 
 
         %rho_mat = beta*beta'*omega2;
         %rho = 1 - sum(rho_mat(d9));
-        omega1 = ones(nalt1).*(1-rho);
+        omega1 = ones(nalt1).*(1-rho^2);
         omega1(d3) = 1;
-        omega1_alt = M1*omega1*M1';
+        omega1_alt = m1*omega1*m1';
         L1 = chol(omega1_alt,'lower');
         
         e = randn(nalt1-1,NDRAW);

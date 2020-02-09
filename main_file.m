@@ -16,6 +16,7 @@ global d3 d4 d9 lower_index
 global SEED NDRAW
 global X1reshape X2reshape Y1reshape Y2reshape
 global rank1reshape rank2reshape emotionreshape
+global M1 M2
 
 nalt1 = 3;
 nset1 = 5;
@@ -73,17 +74,35 @@ rankDCE2(Y2(:,3)==1,1)=3;
 rankDCE2(Y2(:,4)==1,1)=4;
 rank2reshape = reshape(rankDCE2,[nalt2,nset2,nresp]);
 
+
+%% generate transition matrix
+
+M1 = cell(nset1,nresp);
+M2 = cell(nset2,nresp);
+
+for id = 1:nresp
+    for s= 1:nset1
+        M1(s,id) = mat2cell(generateM(rank1reshape(:,s,id)),2,3);
+    end
+    
+    for s=1:nset2
+        M2(s,id) = mat2cell(generateM(rank2reshape(:,s,id)),3,4);
+    end
+    
+end
+
+
 %% unclean unwanted variables
 clear X1 X2 Y1 Y2 rankDCE1 rankDCE2 index1 index2 index_att2 index_choice1...
     index_choice2 low_tindex;
 
 %% declare parameters
 % model Xint*gamma1 + \sum_k beta_k (Xint*gamma2) + \sum_k beta_k *ep2 +
-% ep1, where ep1 ~ N(0,omega1), ep2. ~ N(0, omega2)
-% omega1 ~ [1,1-rho,1-rho; 1-rho, 1, 1-rho; 1-rho,1-rho,1]
+% ep1, where ep1. ~ N(0,omega1), ep2. ~ N(0, omega2)
+% omega1 ~ [1,1-rho^2,1-rho^2; 1-rho^2, 1, 1-rho^2; 1-rho^2,1-rho^2,1]
 % omega2 has diagnol elements 1 with covariance rho_{k,l}
 % params[1:9] gamma1
-% params[10] rho
+% params[10] rho (standard deviation)
 % params[11:91] gamma2
 % params[92:127] rho_{k,l}
 % params[128:136] beta
@@ -122,10 +141,18 @@ lb = ones(136,1).*(-inf);
 lb(10) = 0;
 lb(92:127) = ones(36,1).*(-1);
 ub = ones(136,1).*inf;
-ub(10) = 2;
+ub(10) = sqrt(2);
 ub(92:127) = ones(36,1).*(1);
 
 
 nonlcon = @varcon;
-options = optimoptions('fmincon','Display','iter');
-[x,fval] = fmincon(@loglik,param,A,b,Aeq,beq,lb,ub,nonlcon,options)
+options = optimoptions('fmincon','Display','iter','MaxFunctionEvaluations',...
+    10000,'Algorithm','sqp','MaxIterations',300);
+
+%%
+for i = 1:1
+[x,fval,exitflag,output] = fmincon(@loglik,param,A,b,Aeq,beq,lb,ub,nonlcon,options);
+param = x;
+output;
+exitflag;
+end
